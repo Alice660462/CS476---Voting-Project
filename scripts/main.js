@@ -285,10 +285,9 @@ async function connectMetamask() {
     // Get current Ethereum account address
     const account = await web3.eth.getAccounts();
     const currentAccount = account[0];
-    console.log("Current Account:", currentAccount);
-
+    document.getElementById("connection").innerHTML = "Connected with: " + currentAccount;
   } else {
-    console.log("MetaMask is NOT installed!");
+    document.getElementById("connection").innerHTML ="MetaMask is NOT installed";
   }
 }
 
