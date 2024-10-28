@@ -203,6 +203,7 @@ async function loadCandidates() {
   const votingEnd = await contract.methods.votingEnd().call();
   const currentTime = Math.floor(Date.now() / 1000);
   let timeLeft = parseInt(votingEnd) - currentTime;
+  console.log(timeLeft);
   if(timeLeft > 0) {
     const candidates = await contract.methods.getCandidates().call();
     for (let i = 0; i < candidates.length; i++) {
@@ -214,7 +215,7 @@ async function loadCandidates() {
       `;
       candidateList.appendChild(candidateDiv);
     }
-  document.getElementById("time").innerHTML = `Remaining Time: ${timeLeft}`;
+    updateTime(timeLeft);
   } else {
     const accounts = await web3.eth.getAccounts();
     await contract.methods.updateTimestamp().send({ from: accounts[0] });
@@ -230,6 +231,19 @@ async function loadCandidates() {
     }
     document.getElementById("time").innerHTML = `Voting has ended`;
   }
+}
+
+async function updateTime(timeLeft) {
+  setInterval( async function() {
+      document.getElementById("time").innerHTML = `Remaining Time: ${timeLeft}`;
+      timeLeft -= 1;
+      if(timeLeft < 0) {
+        location.reload();
+        clearInterval(this);
+        console.log("work?");
+      }
+    }
+  , 1000);
 }
 
 async function vote(candidateIndex) {
@@ -286,8 +300,9 @@ async function connectMetamask() {
     const account = await web3.eth.getAccounts();
     const currentAccount = account[0];
     document.getElementById("connection").innerHTML = "Connected with: " + currentAccount;
+
   } else {
-    document.getElementById("connection").innerHTML ="MetaMask is NOT installed";
+    document.getElementById("connection").innerHTML ="MetaMask is NOT installed!";
   }
 }
 
