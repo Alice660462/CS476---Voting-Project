@@ -217,7 +217,7 @@ async function loadCandidates() {
     }
     updateTime(timeLeft);
   } else {
-    const accounts = await web3.eth.getAccounts();
+    const accounts = await window.ethereum.request({ method: 'eth_accounts'});
     await contract.methods.updateTimestamp().send({ from: accounts[0] });
     const candidates = await contract.methods.getAllVotesOfCandiates().call();
     for (let i = 0; i < candidates.length; i++) {
@@ -246,14 +246,49 @@ async function updateTime(timeLeft) {
   , 1000);
 }
 
+async function showAdminTools() {
+     const accounts = await window.ethereum.request({ method: 'eth_accounts'});
+     const admin = accounts[0];
+     const addCandidateDiv = document.createElement("div");
+       addCandidateDiv.className = "addCandidate";
+       addCandidateDiv.innerHTML = `
+        <input type="text" id="newCandidate" placeholder="Enter New Candidate">
+        <button onclick="addNewCandidate()">Add Candidate</button>
+      `;
+     adminTools.appendChild(addCandidateDiv);
+     const reloadDiv = document.createElement("div");
+       reloadDiv.className = "reload";
+       reloadDiv.innerHTML = `
+        <button onclick="refreshPage()">Reload</button>
+      `;
+     adminTools.appendChild(reloadDiv);
+}
+
+async function refreshPage() {
+  location.reload();
+}
+
+async function addNewCandidate() {
+     const candidate = document.getElementById("newCandidate").value;
+     const accounts = await window.ethereum.request({ method: 'eth_accounts'});
+     try {
+       await contract.methods.addCandidate(candidate).send({ from: accounts[0] });
+     } catch (error){
+      console.log(error);
+      const errorMessage = error.data ? error.data.message : error.message;
+      document.getElementById("adminMessage").innerHTML = "Error: " + errorMessage;
+     }
+}
+
 async function vote(candidateIndex) {
-  const accounts = await web3.eth.getAccounts();
+  const accounts = await window.ethereum.request({ method: 'eth_accounts'});
   const voter = accounts[0];
 
   try {
      await contract.methods.vote(candidateIndex).send({ from: voter });
      document.getElementById("message").innerHTML = "Vote successful!";
   } catch (error) {
+     console.log(error);
      const errorMessage = error.data ? error.data.message : error.message;
      document.getElementById("message").innerHTML = "Error voting: " + error;
   }
@@ -278,16 +313,9 @@ async function getResults() {
   }
 
 }
-/*
-async function getTimeRemaining() {
-  const time = await contract.methods.getRemainingTime().call();
-  document.getElementById("time").innerHTML = `Remaining Time: ${time}`;
-  return time;
-}
-*/
 //////////////////////////////////
 
-//Connect to metamask <NOT WORKING>
+//Connect to metamask
 
 async function connectMetamask() {
   if (typeof window.ethereum !== "undefined") {
@@ -297,12 +325,10 @@ async function connectMetamask() {
     await window.ethereum.request({ method: 'eth_requestAccounts' });
 
     // Get current Ethereum account address
-    const account = await web3.eth.getAccounts();
-    const currentAccount = account[0];
-    document.getElementById("connection").innerHTML = "Connected with: " + currentAccount;
+    const accounts = await window.ethereum.request({ method: 'eth_accounts'});
+    document.getElementById("connection").innerHTML = "Connected with: " + accounts[0];
 
   } else {
     document.getElementById("connection").innerHTML ="MetaMask is NOT installed!";
   }
 }
-
